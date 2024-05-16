@@ -92,6 +92,11 @@ which does not override buffers inside `tabspaces-include-buffers'."
   :group 'tabspaces
   :type 'boolean)
 
+(defcustom tabspaces-buffer-list-include-buried-buffers nil
+  "When t, include `buried-buffer-list' in `tabspaces--buffer-list'."
+  :group 'tabspaces
+  :type 'boolean)
+
 (defcustom tabspaces-keymap-prefix "C-c TAB"
   "Key prefix for the tabspaces-prefix-map keymap."
   :group 'tabspaces
@@ -160,7 +165,9 @@ Only the current window buffers and buffers in
 (defun tabspaces--local-buffer-p (buffer)
   "Return whether BUFFER is in the list of local buffers."
   (or (member (buffer-name buffer) tabspaces-include-buffers)
-      (memq buffer (frame-parameter nil 'buffer-list))))
+      (memq buffer (frame-parameter nil 'buffer-list))
+      (when tabspaces-buffer-list-include-buried-buffers
+        (memq buffer (frame-parameter nil 'buried-buffer-list)))))
 
 (defun tabspaces--set-buffer-predicate (frame)
   "Set the buffer predicate of FRAME to `tabspaces--local-buffer-p'."
@@ -185,7 +192,9 @@ non-nil, then specify a tab index in the given frame."
                   (cdr (assq 'wc-bl tab))
                   (mapcar 'get-buffer
                           (car (cdr (assq #'tabspaces--buffer-list (assq 'ws tab))))))))
-           (frame-parameter frame 'buffer-list))))
+           (append (frame-parameter frame 'buffer-list)
+                   (when tabspaces-buffer-list-include-buried-buffers
+                     (frame-parameter frame 'buried-buffer-list))))))
     (seq-filter #'buffer-live-p list)))
 
 ;;;; Project Workspace Helper Functions
